@@ -33,6 +33,7 @@ import com.bumptech.glide.Glide;
 import com.example.android.sunshine.app.MainActivity;
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.Utility;
+import com.example.android.sunshine.app.WearService;
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.muzei.WeatherMuzeiSource;
 
@@ -377,6 +378,10 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private void notifyWeather() {
+
+        Intent wearService = new Intent(getContext(), WearService.class);
+        getContext().startService(wearService);
+
         Context context = getContext();
         //checking the last update and notify if it' the first of the day
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);

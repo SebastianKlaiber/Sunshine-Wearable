@@ -55,10 +55,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Digital watch face with seconds. In ambient mode, the seconds aren't displayed. On devices with
- * low-bit ambient mode, the text is drawn without anti-aliasing in ambient mode.
- */
+
 public class SunshineWearable extends CanvasWatchFaceService {
     private static final String TAG = "SunshineWearable";
 
@@ -67,15 +64,8 @@ public class SunshineWearable extends CanvasWatchFaceService {
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
 
-    /**
-     * Update rate in milliseconds for normal (not ambient and not mute) mode. We update twice
-     * a second to blink the colons.
-     */
     private static final long NORMAL_UPDATE_RATE_MS = 500;
 
-    /**
-     * Update rate in milliseconds for mute mode. We update every minute, like in ambient mode.
-     */
     private static final long MUTE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
 
     @Override
@@ -87,20 +77,16 @@ public class SunshineWearable extends CanvasWatchFaceService {
             GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
         static final String COLON_STRING = ":";
 
-        /** Alpha value for drawing time when in mute mode. */
         static final int MUTE_ALPHA = 100;
 
-        /** Alpha value for drawing time when not in mute mode. */
         static final int NORMAL_ALPHA = 255;
 
         static final int MSG_UPDATE_TIME = 0;
 
         private Bitmap mWeatherIcon;
 
-        /** How often {@link #mUpdateTimeHandler} ticks in milliseconds. */
         long mInteractiveUpdateRateMs = NORMAL_UPDATE_RATE_MS;
 
-        /** Handler to update the time periodically in interactive mode. */
         final Handler mUpdateTimeHandler = new Handler() {
             @Override
             public void handleMessage(Message message) {
@@ -127,9 +113,6 @@ public class SunshineWearable extends CanvasWatchFaceService {
                 .addApi(Wearable.API)
                 .build();
 
-        /**
-         * Handles time zone and locale changes.
-         */
         final BroadcastReceiver mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -139,12 +122,8 @@ public class SunshineWearable extends CanvasWatchFaceService {
             }
         };
 
-        /**
-         * Unregistering an unregistered receiver throws an exception. Keep track of the
-         * registration state to prevent that.
-         */
         boolean mRegisteredReceiver = false;
-
+        Resources resources;
         Calendar mCalendar;
         Date mDate;
         SimpleDateFormat mDayOfWeekFormat;
@@ -183,10 +162,6 @@ public class SunshineWearable extends CanvasWatchFaceService {
         int mInteractiveSecondDigitsColor =
                 DigitalWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_SECOND_DIGITS;
 
-        /**
-         * Whether the display supports fewer bits for each color in ambient mode. When true, we
-         * disable anti-aliasing in ambient mode.
-         */
         boolean mLowBitAmbient;
 
         @Override
@@ -202,13 +177,11 @@ public class SunshineWearable extends CanvasWatchFaceService {
                     .setShowSystemUiTime(false)
                     .build());
 
-            Resources resources = SunshineWearable.this.getResources();
+            resources = SunshineWearable.this.getResources();
             mYOffset = resources.getDimension(R.dimen.digital_y_offset);
             mLineHeight = resources.getDimension(R.dimen.digital_line_height);
             mAmString = resources.getString(R.string.digital_am);
             mPmString = resources.getString(R.string.digital_pm);
-            mMaxTempString = resources.getString(R.string.digital_max);
-            mMinTempString = resources.getString(R.string.digital_min);
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(mInteractiveBackgroundColor);
@@ -364,10 +337,6 @@ public class SunshineWearable extends CanvasWatchFaceService {
                     DigitalWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_HOUR_DIGITS);
             adjustPaintColorToCurrentMode(mMinutePaint, mInteractiveMinuteDigitsColor,
                     DigitalWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_MINUTE_DIGITS);
-            // Actually, the seconds are not rendered in the ambient mode, so we could pass just any
-            // value as ambientColor here.
-//            adjustPaintColorToCurrentMode(mSecondPaint, mInteractiveSecondDigitsColor,
-//                    DigitalWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_SECOND_DIGITS);
 
             if (mLowBitAmbient) {
                 boolean antiAlias = !inAmbientMode;
@@ -379,8 +348,6 @@ public class SunshineWearable extends CanvasWatchFaceService {
             }
             invalidate();
 
-            // Whether the timer should be running depends on whether we're in ambient mode (as well
-            // as whether we're visible), so we may need to start or stop the timer.
             updateTimer();
         }
 
@@ -424,32 +391,6 @@ public class SunshineWearable extends CanvasWatchFaceService {
             }
         }
 
-        private void updatePaintIfInteractive(Paint paint, int interactiveColor) {
-            if (!isInAmbientMode() && paint != null) {
-                paint.setColor(interactiveColor);
-            }
-        }
-
-        private void setInteractiveBackgroundColor(int color) {
-            mInteractiveBackgroundColor = color;
-            updatePaintIfInteractive(mBackgroundPaint, color);
-        }
-
-        private void setInteractiveHourDigitsColor(int color) {
-            mInteractiveHourDigitsColor = color;
-            updatePaintIfInteractive(mHourPaint, color);
-        }
-
-        private void setInteractiveMinuteDigitsColor(int color) {
-            mInteractiveMinuteDigitsColor = color;
-            updatePaintIfInteractive(mMinutePaint, color);
-        }
-
-        private void setInteractiveSecondDigitsColor(int color) {
-            mInteractiveSecondDigitsColor = color;
-//            updatePaintIfInteractive(mSecondPaint, color);
-        }
-
         private String formatTwoDigitNumber(int hour) {
             return String.format("%02d", hour);
         }
@@ -461,7 +402,6 @@ public class SunshineWearable extends CanvasWatchFaceService {
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
             int width = bounds.width();
-            int height = bounds.height();
             float centerX = width / 2f;
 
             long now = System.currentTimeMillis();
@@ -517,17 +457,14 @@ public class SunshineWearable extends CanvasWatchFaceService {
 
                 canvas.drawLine(centerX - 30, mYOffset + 55, centerX + 30, mYOffset + 56, mLine);
 
-                String maxTempString = mMaxTempString + "\u00b0";
-                String minTempString = mMinTempString + "\u00b0";
-
-                float imgPosition = centerX - resizedBitmap.getWidth() - mMaxTempPaint.measureText(maxTempString) / 2 - 35;
+                float imgPosition = centerX - resizedBitmap.getWidth() - mMaxTempPaint.measureText(mMaxTempString) / 2 - 35;
                 canvas.drawBitmap(resizedBitmap, imgPosition, mYOffset + 64, new Paint());
 
-                float maxPosition = centerX - mMaxTempPaint.measureText(maxTempString) / 2;
-                canvas.drawText(maxTempString, maxPosition, mYOffset + 100, mMaxTempPaint);
+                float maxPosition = centerX - mMaxTempPaint.measureText(mMaxTempString) / 2;
+                canvas.drawText(mMaxTempString, maxPosition, mYOffset + 100, mMaxTempPaint);
 
-                float minPosition = centerX + mMaxTempPaint.measureText(maxTempString) / 2 + 15;
-                canvas.drawText(minTempString, minPosition, mYOffset + 100, mMinTempPaint);
+                float minPosition = centerX + mMaxTempPaint.measureText(mMaxTempString) / 2 + 15;
+                canvas.drawText(mMinTempString, minPosition, mYOffset + 100, mMinTempPaint);
 
             }
         }
@@ -554,39 +491,6 @@ public class SunshineWearable extends CanvasWatchFaceService {
             return isVisible() && !isInAmbientMode();
         }
 
-        private void updateConfigDataItemAndUiOnStartup() {
-            DigitalWatchFaceUtil.fetchConfigDataMap(mGoogleApiClient,
-                    new DigitalWatchFaceUtil.FetchConfigDataMapCallback() {
-                        @Override
-                        public void onConfigDataMapFetched(DataMap startupConfig) {
-                            // If the DataItem hasn't been created yet or some keys are missing,
-                            // use the default values.
-                            setDefaultValuesForMissingConfigKeys(startupConfig);
-                            DigitalWatchFaceUtil.putConfigDataItem(mGoogleApiClient, startupConfig);
-
-                            updateUiForConfigDataMap(startupConfig);
-                        }
-                    }
-            );
-        }
-
-        private void setDefaultValuesForMissingConfigKeys(DataMap config) {
-            addIntKeyIfMissing(config, DigitalWatchFaceUtil.KEY_BACKGROUND_COLOR,
-                    R.color.dialog_background);
-            addIntKeyIfMissing(config, DigitalWatchFaceUtil.KEY_HOURS_COLOR,
-                    DigitalWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_HOUR_DIGITS);
-            addIntKeyIfMissing(config, DigitalWatchFaceUtil.KEY_MINUTES_COLOR,
-                    DigitalWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_MINUTE_DIGITS);
-            addIntKeyIfMissing(config, DigitalWatchFaceUtil.KEY_SECONDS_COLOR,
-                    DigitalWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_SECOND_DIGITS);
-        }
-
-        private void addIntKeyIfMissing(DataMap config, String key, int color) {
-            if (!config.containsKey(key)) {
-                config.putInt(key, color);
-            }
-        }
-
         @Override // DataApi.DataListener
         public void onDataChanged(DataEventBuffer dataEvents) {
             for (DataEvent dataEvent : dataEvents) {
@@ -596,7 +500,7 @@ public class SunshineWearable extends CanvasWatchFaceService {
 
                 DataItem dataItem = dataEvent.getDataItem();
                 if (!dataItem.getUri().getPath().equals(
-                        DigitalWatchFaceUtil.PATH_WITH_FEATURE)) {
+                        DigitalWatchFaceUtil.PATH)) {
                     continue;
                 }
 
@@ -605,50 +509,19 @@ public class SunshineWearable extends CanvasWatchFaceService {
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
                     Log.d(TAG, "Config DataItem updated:" + config);
                 }
-                updateUiForConfigDataMap(config);
-            }
-        }
 
-        private void updateUiForConfigDataMap(final DataMap config) {
-            boolean uiUpdated = false;
-            for (String configKey : config.keySet()) {
-                if (!config.containsKey(configKey)) {
-                    continue;
-                }
-                int color = config.getInt(configKey);
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Found watch face config key: " + configKey + " -> "
-                            + Integer.toHexString(color));
-                }
-                if (updateUiForKey(configKey, color)) {
-                    uiUpdated = true;
-                }
-            }
-            if (uiUpdated) {
+                int weather_id = config.getInt(DigitalWatchFaceUtil.KEY_WEATHER_ID);
+                double max_temp = config.getDouble(DigitalWatchFaceUtil.KEY_MAX_TEMP);
+                double min_temp = config.getDouble(DigitalWatchFaceUtil.KEY_MIN_TEMP);
+
+                mMaxTempString = DigitalWatchFaceUtil.formatTemperature(resources, max_temp);
+                mMinTempString = DigitalWatchFaceUtil.formatTemperature(resources, min_temp);
+
+                mWeatherIcon = BitmapFactory.decodeResource(getResources(),
+                        DigitalWatchFaceUtil.getIconResourceForWeatherCondition(weather_id));
+
                 invalidate();
             }
-        }
-
-        /**
-         * Updates the color of a UI item according to the given {@code configKey}. Does nothing if
-         * {@code configKey} isn't recognized.
-         *
-         * @return whether UI has been updated
-         */
-        private boolean updateUiForKey(String configKey, int color) {
-            if (configKey.equals(DigitalWatchFaceUtil.KEY_BACKGROUND_COLOR)) {
-                setInteractiveBackgroundColor(R.color.digital_background);
-            } else if (configKey.equals(DigitalWatchFaceUtil.KEY_HOURS_COLOR)) {
-                setInteractiveHourDigitsColor(color);
-            } else if (configKey.equals(DigitalWatchFaceUtil.KEY_MINUTES_COLOR)) {
-                setInteractiveMinuteDigitsColor(color);
-            } else if (configKey.equals(DigitalWatchFaceUtil.KEY_SECONDS_COLOR)) {
-                setInteractiveSecondDigitsColor(color);
-            } else {
-                Log.w(TAG, "Ignoring unknown config key: " + configKey);
-                return false;
-            }
-            return true;
         }
 
         @Override  // GoogleApiClient.ConnectionCallbacks
@@ -657,7 +530,6 @@ public class SunshineWearable extends CanvasWatchFaceService {
                 Log.d(TAG, "onConnected: " + connectionHint);
             }
             Wearable.DataApi.addListener(mGoogleApiClient, Engine.this);
-            updateConfigDataItemAndUiOnStartup();
         }
 
         @Override  // GoogleApiClient.ConnectionCallbacks
