@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">Wearable</string>
     <string name="my_digital_name">Sunshine</string>
+
+    <string name="digital_am">AM</string>
+    <string name="digital_pm">PM</string>
+
+    <string name="digital_min">15</string>
+    <string name="digital_max">20</string>
 </resources>
